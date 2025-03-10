@@ -36,7 +36,7 @@ The dataset used contains census data, where each row represents an individual w
 3. Ensure that the dataset `adult.data.csv` is in the same directory as the script.
 4. Run the script:
    ```bash
-   python demographic_analyzer.py
+   python demographic_analyzer.ipynb
    ```
 
 ## **Code Explanation**
