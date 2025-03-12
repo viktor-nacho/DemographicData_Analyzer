@@ -1,54 +1,67 @@
 # **DemographicData_Analyzer**
 
 ## **Project Overview**
-This project analyzes demographic data from the **"adult.data.csv"** dataset and extracts meaningful insights, including:
-- The distribution of different races.
-- The average age of men.
-- The percentage of people with a **Bachelor’s degree**.
-- Income disparities based on education level.
-- The relationship between working hours and income.
-- Countries with the highest percentage of high-income earners.
-- The most common occupation among high earners in India.
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-## **Dataset Description**
-The dataset used contains census data, where each row represents an individual with various attributes such as age, education level, occupation, native country, and salary level (>50K or <=50K).
+# Load dataset
+df = pd.read_csv('adult.data.csv')
 
-### **Features Used**
-- `age` - Age of the individual
-- `race` - Race category
-- `sex` - Gender
-- `education` - Level of education
-- `hours-per-week` - Working hours per week
-- `native-country` - Country of residence
-- `salary` - Income category (`>50K` or `<=50K`)
+# Display basic information about the dataset
+print(df.info())
+print(df.head())
 
-## **Installation and Usage**
-### **Prerequisites**
-- Python 3.x
-- Pandas library
+# Handle missing values (if any)
+df.replace(' ?', np.nan, inplace=True)
+df.dropna(inplace=True)
 
-### **Setup**
-1. Clone this repository or download the script.
-2. Install required dependencies:
-   ```bash
-   pip install pandas
-   ```
-3. Ensure that the dataset `adult.data.csv` is in the same directory as the script.
-4. Run the script:
-   ```bash
-   python demographic_analyzer.ipynb
-   ```
+# Encode categorical variables using Label Encoding
+le = LabelEncoder()
+for col in df.select_dtypes(include=['object']).columns:
+    df[col] = le.fit_transform(df[col])
 
-## **Code Explanation**
-The script performs the following calculations:
-1. **Counts the number of each race** using `value_counts()`.
-2. **Finds the average age of men** by filtering the dataset and computing the mean.
-3. **Calculates the percentage of people with a Bachelor's degree**.
-4. **Determines the income disparity between people with advanced education and those without**.
-5. **Finds the minimum hours worked per week** and analyzes how many of those individuals earn more than 50K.
-6. **Identifies the country with the highest percentage of high earners**.
-7. **Finds the most common occupation among high earners in India**.
+# Define feature variables (X) and target variable (y)
+X = df.drop(columns=['salary'])
+y = df['salary']
 
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Normalize features using StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Initialize machine learning models
+models = {
+    'Logistic Regression': LogisticRegression(),
+    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
+    'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, random_state=42)
+}
+
+# Train and evaluate models
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f'\n{name} Accuracy: {accuracy:.2f}')
+    print(classification_report(y_test, y_pred))
+    sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d', cmap='Blues')
+    plt.title(f'{name} Confusion Matrix')
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.show()
+
+# Identify the best model
+best_model = max(models, key=lambda name: accuracy_score(y_test, models[name].predict(X_test)))
+print(f'Best performing model: {best_model}')
 ## **Expected Output**
 When the script runs, it prints key demographic statistics and returns them as a dictionary.
 
